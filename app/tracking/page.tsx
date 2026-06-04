@@ -399,42 +399,62 @@ function CronSetup({ intervalDays }: { intervalDays: number }) {
                 前往{" "}
                 <a href="https://vercel.com/new" target="_blank" rel="noopener noreferrer"
                   className="text-blue-500 hover:underline">vercel.com/new</a>
-                {" "}→ Import Git Repository → 選你的 repo → Deploy
+                {" "}→ 選 <strong>「Import Git Repository」</strong> →
+                選你的 GitHub repo →
+                Framework 確認是 <strong>Next.js</strong> →
+                點 <strong>「Deploy」</strong>
               </p>
             </div>
 
-            <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-zinc-500">步驟 3 — 設定環境變數</p>
-              <p className="text-xs text-zinc-400">
-                Vercel 專案頁 → Settings → Environment Variables，加入以下變數：
-              </p>
-              <div className="rounded-lg bg-zinc-900 px-3 py-2 space-y-0.5">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-zinc-500">步驟 3 — 設定環境變數（最新介面）</p>
+              <ol className="space-y-1.5 text-xs text-zinc-500 list-none">
+                <li className="flex gap-2"><span className="shrink-0 font-bold text-zinc-400">①</span>
+                  進入你的 Vercel 專案頁面（vercel.com/dashboard → 點專案名稱）
+                </li>
+                <li className="flex gap-2"><span className="shrink-0 font-bold text-zinc-400">②</span>
+                  左側 sidebar 點 <strong className="text-zinc-700">「Environment Variables」</strong>
+                </li>
+                <li className="flex gap-2"><span className="shrink-0 font-bold text-zinc-400">③</span>
+                  點右上角 <strong className="text-zinc-700">「Add Environment Variable」</strong>，依序加入以下 5 個變數，
+                  每個都選 <strong className="text-zinc-700">Production</strong> 環境，填完點 <strong className="text-zinc-700">「Save」</strong>
+                </li>
+              </ol>
+              <div className="rounded-lg bg-zinc-900 px-3 py-2 space-y-1">
                 {[
-                  ["TELEGRAM_TOKEN",  "你的 Bot Token"],
-                  ["TELEGRAM_CHAT_ID","你的 Chat ID"],
+                  ["TELEGRAM_TOKEN",  "你的 Bot Token（必填）"],
+                  ["TELEGRAM_CHAT_ID","你的 Chat ID（必填）"],
                   ["EMAIL_TO",        "收件 Email（選填）"],
                   ["EMAIL_FROM",      "寄件 Gmail（選填）"],
                   ["EMAIL_PASSWORD",  "Gmail App 密碼（選填）"],
                 ].map(([k, v]) => (
-                  <div key={k} className="flex gap-2 text-xs font-mono">
+                  <div key={k} className="flex gap-2 text-xs font-mono items-baseline">
                     <span className="text-yellow-400 shrink-0">{k}</span>
-                    <span className="text-zinc-500">=</span>
-                    <span className="text-zinc-400">{v}</span>
+                    <span className="text-zinc-600 text-[10px]">← {v}</span>
                   </div>
                 ))}
               </div>
+              <li className="flex gap-2 text-xs text-zinc-500 list-none">
+                <span className="shrink-0 font-bold text-zinc-400">④</span>
+                全部加完後，回到 Deployments 點 <strong className="text-zinc-700">「Redeploy」</strong>，
+                環境變數才會生效
+              </li>
             </div>
 
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-zinc-500">步驟 4 — 確認 vercel.json 的排程</p>
+              <p className="text-xs font-semibold text-zinc-500">步驟 4 — Cron 排程（vercel.json）</p>
               <p className="text-xs text-zinc-400">
-                專案根目錄的 <code className="bg-zinc-100 px-1 rounded">vercel.json</code> 已設定為{" "}
-                <span className="font-medium text-zinc-600">{desc}（台灣時間 09:00）</span>，
-                可視需求修改 schedule 欄位：
+                專案裡的 <code className="bg-zinc-100 px-1 rounded">vercel.json</code> 已包含排程設定（{desc}，UTC 時間）。
+                Push 後 Vercel 自動套用，無需在 Dashboard 額外操作。
               </p>
               <CodeBlock text={vercelJson} onCopy={copy} copied={copied} />
               <p className="text-xs text-zinc-400">
-                修改後 git commit + push，Vercel 會自動更新排程。
+                如需調整時間，修改 <code className="bg-zinc-100 px-1 rounded">schedule</code> 後 git commit + push 即可。
+                注意：Vercel Cron 使用 <strong className="text-zinc-600">UTC 時間</strong>，台灣時間 09:00 = UTC 01:00。
+              </p>
+              <p className="text-xs text-zinc-400">
+                部署後可在 Vercel 專案頁 → 左側 sidebar →{" "}
+                <strong className="text-zinc-600">Cron Jobs</strong> 查看排程狀態與執行紀錄。
               </p>
             </div>
 
