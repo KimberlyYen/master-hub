@@ -6,10 +6,12 @@ export type Attachment = {
   id: string;
   name: string;
   url: string;
+  storageKey?: string; // Supabase storage path for deletion (e.g. "schoolId/filename")
   type: string;
   size: number;
   uploadedAt: string;
-  docIndex?: number; // which requiredDocuments[i] this file belongs to
+  docIndex?: number;  // which school's requiredDocuments[i] this file belongs to
+  docLabel?: string;  // document label (used by master checklist)
 };
 
 type Store = Record<string, Attachment[]>;
@@ -50,12 +52,12 @@ export function useAttachments(schoolId: string) {
   );
 
   const remove = useCallback(
-    (id: string, url: string) => {
+    (id: string, url: string, storageKey?: string) => {
       // Fire-and-forget: delete the physical file
       fetch("/api/upload", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filePath: url }),
+        body: JSON.stringify(storageKey ? { storageKey } : { filePath: url }),
       });
 
       setAttachments((prev) => {
@@ -70,6 +72,18 @@ export function useAttachments(schoolId: string) {
   );
 
   return { attachments, add, remove };
+}
+
+// Add the same file(s) to multiple schools at once (used by master checklist)
+export function bulkAddAttachments(
+  entries: { schoolId: string; attachments: Attachment[] }[]
+) {
+  if (typeof window === "undefined") return;
+  const store = readStore();
+  for (const { schoolId, attachments } of entries) {
+    store[schoolId] = [...(store[schoolId] ?? []), ...attachments];
+  }
+  writeStore(store);
 }
 
 export function isImage(type: string, name: string): boolean {

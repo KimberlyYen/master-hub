@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { runScrape, type ScrapeResult } from "../../lib/scraper";
 import { readNotifyConfig } from "../config/notify/route";
+import { parseSnippets } from "../../lib/dateParser";
+import { saveUpdates } from "../updates/route";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -163,6 +165,13 @@ export async function POST() {
   }
 
   const results        = await runScrape();
+
+  // Parse scraped snippets → proposed date updates (saved server-side)
+  const proposed = parseSnippets(results);
+  if (proposed.length > 0) {
+    await saveUpdates({ savedAt: new Date().toISOString(), updates: proposed });
+  }
+
   const telegramMsg    = buildTelegramHtml(results);
   const emailHtml      = buildEmailHtml(results);
   const notifyErrors: string[] = [];

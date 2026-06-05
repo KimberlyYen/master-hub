@@ -251,11 +251,12 @@ export default function FileAttachments({ schoolId }: { schoolId: string }) {
           return;
         }
         add(
-          (data.files as { name: string; url: string; type: string; size: number }[]).map(
+          (data.files as { name: string; url: string; storageKey?: string; type: string; size: number }[]).map(
             (f) => ({
               id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
               name: f.name,
               url: f.url,
+              storageKey: f.storageKey,
               type: f.type,
               size: f.size,
               uploadedAt: new Date().toISOString(),
@@ -286,7 +287,7 @@ export default function FileAttachments({ schoolId }: { schoolId: string }) {
                 key={a.id}
                 attachment={a}
                 onView={imgIdx >= 0 ? () => setLightboxIndex(imgIdx) : undefined}
-                onDelete={() => remove(a.id, a.url)}
+                onDelete={() => remove(a.id, a.url, a.storageKey)}
               />
             );
           })}

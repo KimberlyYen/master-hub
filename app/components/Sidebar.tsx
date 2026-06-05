@@ -11,6 +11,8 @@ type NavItem = {
 
 const mainNav: NavItem[] = [
   { label: "研究所申請追蹤", href: "/applications", icon: "◈" },
+  { label: "文件總覽", href: "/documents", icon: "📋" },
+  { label: "申請時程", href: "/gantt", icon: "📅" },
 ];
 
 const bottomNav: NavItem[] = [

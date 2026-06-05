@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSchools } from "../lib/schoolStore";
 import FileAttachments from "../components/FileAttachments";
 import { useAttachments, type Attachment } from "../lib/attachmentStore";
+import PendingUpdates from "../components/PendingUpdates";
 import {
   ALL_STATUSES,
   STATUS_COLORS,
@@ -168,11 +169,12 @@ function DocChecklist({
       const data = await res.json();
       if (data.files) {
         add(
-          (data.files as { name: string; url: string; type: string; size: number }[]).map(
+          (data.files as { name: string; url: string; storageKey?: string; type: string; size: number }[]).map(
             (f) => ({
               id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
               name: f.name,
               url: f.url,
+              storageKey: f.storageKey,
               type: f.type,
               size: f.size,
               uploadedAt: new Date().toISOString(),
@@ -598,6 +600,9 @@ export default function ApplicationsPage() {
             <h1 className="text-2xl font-bold text-zinc-800">研究所在職專班申請追蹤</h1>
           </div>
         </div>
+
+        {/* Pending updates from scraper */}
+        <PendingUpdates />
 
         {/* Category tabs */}
         <div className="flex gap-1 border-b border-zinc-200">
