@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
-import { supabaseAdmin, BUCKET } from "../../lib/supabaseClient";
+import { getSupabaseAdmin, isSupabaseConfigured, BUCKET } from "../../lib/supabaseClient";
 
 const MAX_SIZE = 30 * 1024 * 1024; // 30 MB
 
@@ -16,9 +16,11 @@ function safeName(original: string): string {
 // ── Upload ────────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  if (!process.env.SUPABASE_URL) {
+  if (!isSupabaseConfigured()) {
     return NextResponse.json({ error: "尚未設定 Supabase 環境變數，請填寫 .env.local" }, { status: 503 });
   }
+
+  const supabaseAdmin = getSupabaseAdmin();
 
   try {
     const formData = await req.formData();
@@ -64,8 +66,8 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const { storageKey } = await req.json() as { storageKey?: string };
-    if (storageKey && process.env.SUPABASE_URL) {
-      const { error } = await supabaseAdmin.storage.from(BUCKET).remove([storageKey]);
+    if (storageKey && isSupabaseConfigured()) {
+      const { error } = await getSupabaseAdmin().storage.from(BUCKET).remove([storageKey]);
       if (error) throw new Error(error.message);
     }
     return NextResponse.json({ ok: true });
