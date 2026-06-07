@@ -1,95 +1,13 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useCallback } from "react";
 import {
   useAttachments,
   isImage,
   formatSize,
   type Attachment,
 } from "../lib/attachmentStore";
-
-// ── Lightbox ──────────────────────────────────────────────────────────────────
-
-function Lightbox({
-  images,
-  index,
-  onClose,
-  onNav,
-}: {
-  images: Attachment[];
-  index: number;
-  onClose: () => void;
-  onNav: (i: number) => void;
-}) {
-  const current = images[index];
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft") onNav(Math.max(0, index - 1));
-      if (e.key === "ArrowRight") onNav(Math.min(images.length - 1, index + 1));
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [index, images.length, onClose, onNav]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85"
-      onClick={onClose}
-    >
-      <div
-        className="relative flex flex-col items-center max-w-5xl max-h-screen p-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-white/70 hover:text-white text-2xl leading-none z-10"
-        >
-          ✕
-        </button>
-
-        {/* Image */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={current.url}
-          alt={current.name}
-          className="max-w-full max-h-[82vh] object-contain rounded shadow-2xl"
-        />
-
-        {/* Caption */}
-        <p className="mt-3 text-white/70 text-sm text-center">
-          {current.name}
-          <span className="ml-2 text-white/40">{formatSize(current.size)}</span>
-        </p>
-
-        {/* Navigation */}
-        {images.length > 1 && (
-          <div className="flex items-center gap-4 mt-3">
-            <button
-              onClick={() => onNav(Math.max(0, index - 1))}
-              disabled={index === 0}
-              className="text-white/60 hover:text-white disabled:opacity-20 text-xl px-2"
-            >
-              ‹
-            </button>
-            <span className="text-white/50 text-xs">
-              {index + 1} / {images.length}
-            </span>
-            <button
-              onClick={() => onNav(Math.min(images.length - 1, index + 1))}
-              disabled={index === images.length - 1}
-              className="text-white/60 hover:text-white disabled:opacity-20 text-xl px-2"
-            >
-              ›
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+import { AttachmentLightbox } from "./AttachmentList";
 
 // ── Upload zone ───────────────────────────────────────────────────────────────
 
@@ -301,7 +219,7 @@ export default function FileAttachments({ schoolId }: { schoolId: string }) {
       )}
 
       {lightboxIndex !== null && (
-        <Lightbox
+        <AttachmentLightbox
           images={imageAttachments}
           index={lightboxIndex}
           onClose={() => setLightboxIndex(null)}

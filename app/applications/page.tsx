@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSchools } from "../lib/schoolStore";
 import FileAttachments from "../components/FileAttachments";
+import { AttachmentInlineList } from "../components/AttachmentList";
 import { useAttachments, type Attachment } from "../lib/attachmentStore";
 import PendingUpdates from "../components/PendingUpdates";
 import { usePreferences, getSchoolRank } from "../lib/preferenceStore";
@@ -259,16 +260,7 @@ function DocChecklist({
           />
         </div>
 
-        {/* Inline file list for this doc */}
-        {docFiles.length > 0 && (
-          <ul className="ml-6 space-y-0.5">
-            {docFiles.map((f) => (
-              <li key={f.id} className="text-xs text-zinc-400 truncate">
-                · {f.name}
-              </li>
-            ))}
-          </ul>
-        )}
+        <AttachmentInlineList files={docFiles} />
       </li>
     );
   }

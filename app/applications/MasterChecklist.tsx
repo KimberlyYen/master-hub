@@ -4,10 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   useAttachments,
   bulkAddAttachments,
-  isImage,
-  formatSize,
   type Attachment,
 } from "../lib/attachmentStore";
+import { AttachmentInlineList } from "../components/AttachmentList";
 import type { School } from "./data";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -172,17 +171,7 @@ function MasterDocRow({
         </ul>
       )}
 
-      {/* Uploaded files for this doc */}
-      {docFiles.length > 0 && (
-        <ul className="ml-6 space-y-0.5">
-          {docFiles.map((f) => (
-            <li key={f.id} className="flex items-center gap-1.5 text-xs text-zinc-400">
-              <span className="truncate">· {f.name}</span>
-              <span className="text-zinc-300 shrink-0">({formatSize(f.size)})</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <AttachmentInlineList files={docFiles} />
     </li>
   );
 }
