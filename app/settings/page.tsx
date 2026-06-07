@@ -196,7 +196,7 @@ function SchoolForm({
       {/* 基本資訊 */}
       <div>
         <SectionTitle>基本資訊</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="學校名稱" required>
             <input
               className={inputCls}
@@ -274,7 +274,7 @@ function SchoolForm({
       {/* 重要日期 */}
       <div>
         <SectionTitle>重要日期</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {(
             [
               ["brochureDate", "公告簡章"],
@@ -456,7 +456,7 @@ function SchoolForm({
             用於預判 116 年公告時程，可手動修正
           </span>
         </SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {(
             [
               ["ref115_brochure",      "公告簡章（115年）"],

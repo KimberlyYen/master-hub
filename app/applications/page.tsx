@@ -6,6 +6,7 @@ import { useSchools } from "../lib/schoolStore";
 import FileAttachments from "../components/FileAttachments";
 import { useAttachments, type Attachment } from "../lib/attachmentStore";
 import PendingUpdates from "../components/PendingUpdates";
+import { usePreferences, getSchoolRank } from "../lib/preferenceStore";
 import {
   ALL_STATUSES,
   STATUS_COLORS,
@@ -339,14 +340,20 @@ function DateCompareRow({
 
 // ── Application Card ─────────────────────────────────────────────────────────
 
+const RANK_LABELS = ["第一志願", "第二志願", "第三志願"] as const;
+
 function ApplicationCard({
   school,
   userState,
   onStateChange,
+  prefRank,
+  onSetPreference,
 }: {
   school: School;
   userState: UserState;
   onStateChange: (patch: Partial<UserState>) => void;
+  prefRank?: 0 | 1 | 2 | null;
+  onSetPreference?: (rank: 0 | 1 | 2 | null) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const { status, checkedDocs, notes } = userState;
@@ -393,6 +400,25 @@ function ApplicationCard({
           <span>工作年資 {school.workExpRequired}</span>
           {school.applicationFee && (
             <span className="text-amber-600">報名費 ${school.applicationFee}</span>
+          )}
+          {onSetPreference && (
+            <select
+              value={prefRank === null || prefRank === undefined ? "" : String(prefRank)}
+              onChange={(e) => {
+                const v = e.target.value;
+                onSetPreference(v === "" ? null : (Number(v) as 0 | 1 | 2));
+              }}
+              className={`rounded-full px-2 py-0.5 border cursor-pointer outline-none text-xs font-medium ${
+                prefRank != null
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  : "bg-zinc-50 text-zinc-400 border-zinc-200"
+              }`}
+            >
+              <option value="">志願</option>
+              <option value="0">① 第一志願</option>
+              <option value="1">② 第二志願</option>
+              <option value="2">③ 第三志願</option>
+            </select>
           )}
         </div>
       </div>
@@ -513,7 +539,7 @@ function ApplicationCard({
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 
-type CategoryTab = "全部" | "資管" | "資工";
+type CategoryTab = "全部" | "資管" | "資工" | "前三志願";
 
 function detectCategory(department: string): "資管" | "資工" {
   if (department.includes("資訊管理") || department.includes("資管")) return "資管";
@@ -522,6 +548,7 @@ function detectCategory(department: string): "資管" | "資工" {
 
 export default function ApplicationsPage() {
   const { schools, loaded } = useSchools();
+  const { preferences, loaded: prefsLoaded, setChoiceBySchool } = usePreferences();
   const [allState, setAllState] = useState<AllUserState>({});
   const [categoryTab, setCategoryTab] = useState<CategoryTab>("全部");
   const [filterStatus, setFilterStatus] = useState<Status | "全部">("全部");
@@ -547,7 +574,7 @@ export default function ApplicationsPage() {
     []
   );
 
-  if (!loaded) {
+  if (!loaded || !prefsLoaded) {
     return (
       <div className="flex-1 flex items-center justify-center text-sm text-zinc-400">
         載入中...
@@ -558,17 +585,26 @@ export default function ApplicationsPage() {
   const visible = schools.filter((s) => !s.hidden);
   const imCount = visible.filter((s) => detectCategory(s.department) === "資管").length;
   const csCount = visible.filter((s) => detectCategory(s.department) === "資工").length;
+  const prefCount = preferences.filter(Boolean).length;
 
-  const filtered = visible.filter((s) => {
-    if (categoryTab !== "全部" && detectCategory(s.department) !== categoryTab) return false;
-    if (filterStatus === "全部") return true;
-    return (allState[s.id]?.status ?? "未開始") === filterStatus;
-  });
+  const prefSchools = preferences
+    .map((id) => (id ? visible.find((s) => s.id === id) : null))
+    .filter((s): s is School => s != null);
+
+  const filtered =
+    categoryTab === "前三志願"
+      ? prefSchools
+      : visible.filter((s) => {
+          if (categoryTab !== "全部" && detectCategory(s.department) !== categoryTab) return false;
+          if (filterStatus === "全部") return true;
+          return (allState[s.id]?.status ?? "未開始") === filterStatus;
+        });
 
   const tabs: { label: string; value: CategoryTab; count: number }[] = [
     { label: "全部", value: "全部", count: visible.length },
     { label: "資管", value: "資管", count: imCount },
     { label: "資工", value: "資工", count: csCount },
+    { label: "前三志願", value: "前三志願", count: prefCount },
   ];
 
   const CATEGORY_INFO: Record<"資管" | "資工", {
@@ -676,31 +712,37 @@ export default function ApplicationsPage() {
           );
         })()}
 
-        {/* Stats */}
-        <StatsBar schools={visible} allState={allState} />
+        {categoryTab !== "前三志願" && (
+          <>
+            <StatsBar schools={visible} allState={allState} />
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-zinc-400 font-medium">篩選：</span>
+              {(["全部", ...ALL_STATUSES] as (Status | "全部")[]).map((s) => {
+                const active = filterStatus === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setFilterStatus(s)}
+                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                      active
+                        ? "bg-zinc-800 text-white border-zinc-800"
+                        : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-400"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
 
-        {/* Status filter */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-zinc-400 font-medium">篩選：</span>
-          {(["全部", ...ALL_STATUSES] as (Status | "全部")[]).map((s) => {
-            const active = filterStatus === s;
-            return (
-              <button
-                key={s}
-                onClick={() => setFilterStatus(s)}
-                className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                  active
-                    ? "bg-zinc-800 text-white border-zinc-800"
-                    : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-400"
-                }`}
-              >
-                {s}
-              </button>
-            );
-          })}
-        </div>
+        {categoryTab === "前三志願" && prefCount === 0 && (
+          <p className="text-sm text-zinc-500">
+            在「全部」、「資管」或「資工」分頁的學校卡片上，從「志願」下拉選單設定前三志願。
+          </p>
+        )}
 
-        {/* Cards */}
         {schools.length === 0 ? (
           <div className="text-center py-16 space-y-3">
             <p className="text-zinc-400 text-sm">尚無學校資料。</p>
@@ -713,18 +755,29 @@ export default function ApplicationsPage() {
           </div>
         ) : filtered.length === 0 ? (
           <p className="text-sm text-zinc-400 py-12 text-center">
-            沒有符合篩選條件的學校。
+            {categoryTab === "前三志願" ? "尚未設定任何志願。" : "沒有符合篩選條件的學校。"}
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map((school) => (
-              <ApplicationCard
-                key={school.id}
-                school={school}
-                userState={allState[school.id] ?? defaultUserState(school)}
-                onStateChange={(patch) => updateSchoolState(school.id, patch)}
-              />
-            ))}
+            {filtered.map((school) => {
+              const rank = getSchoolRank(preferences, school.id);
+              return (
+                <div key={school.id} className="space-y-1">
+                  {categoryTab === "前三志願" && rank != null && (
+                    <p className="text-xs font-semibold text-amber-700 px-1">
+                      {RANK_LABELS[rank]}
+                    </p>
+                  )}
+                  <ApplicationCard
+                    school={school}
+                    userState={allState[school.id] ?? defaultUserState(school)}
+                    onStateChange={(patch) => updateSchoolState(school.id, patch)}
+                    prefRank={rank}
+                    onSetPreference={(r) => setChoiceBySchool(school.id, r)}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
 

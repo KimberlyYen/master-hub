@@ -30,7 +30,13 @@ export default function RootLayout({
     >
       <body className="flex min-h-full">
         <Sidebar />
-        <div className="flex flex-1 flex-col">{children}</div>
+        <div className="flex flex-1 flex-col min-w-0">
+          {/* Mobile top bar — creates space below the fixed hamburger button */}
+          <div className="md:hidden flex h-12 shrink-0 items-center border-b border-zinc-200 bg-white px-4 pl-14">
+            <span className="text-sm font-semibold text-zinc-600">Master Hub</span>
+          </div>
+          {children}
+        </div>
       </body>
     </html>
   );

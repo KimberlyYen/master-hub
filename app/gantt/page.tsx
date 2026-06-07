@@ -259,8 +259,8 @@ export default function GanttPage() {
         </div>
 
         {/* Chart */}
-        <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
-          <div className="px-4 pt-3 pb-2">
+        <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden overflow-x-auto">
+          <div className="px-4 pt-3 pb-2 min-w-[600px]">
             <MonthGrid />
             <div className="space-y-0">
               {visible.map((school) => (

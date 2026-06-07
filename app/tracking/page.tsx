@@ -184,7 +184,7 @@ function NotifySettings() {
           {saved?.hasTelegram && <span className="text-xs text-green-600 font-medium">✓ 已設定</span>}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <p className="text-xs text-zinc-400 mb-1">Bot Token</p>
             <input className={inp} type="password"
@@ -246,7 +246,7 @@ function NotifySettings() {
           {saved?.hasEmail && <span className="text-xs text-green-600 font-medium">✓ 已設定</span>}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <p className="text-xs text-zinc-400 mb-1">收件人 Email</p>
             <input className={inp} placeholder="you@example.com" value={emailTo} onChange={e => setEmailTo(e.target.value)} />
@@ -497,7 +497,7 @@ function CronSetup({ intervalDays }: { intervalDays: number }) {
 
 function CodeBlock({ text, onCopy, copied }: { text: string; onCopy: (t: string) => void; copied: boolean }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-zinc-900 px-3 py-2">
+    <div className="flex items-center gap-2 rounded-lg bg-zinc-900 px-3 py-2 overflow-x-auto">
       <code className="flex-1 text-xs text-green-400 font-mono break-all">{text}</code>
       <button onClick={() => onCopy(text)}
         className="shrink-0 text-xs text-zinc-400 hover:text-white transition-colors">
@@ -575,7 +575,7 @@ export default function TrackingPage() {
         {/* Status & manual run */}
         <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-4">
           <p className="text-sm font-semibold text-zinc-700">執行狀態</p>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-xs text-zinc-400 mb-0.5">上次爬取</p>
               <p className="text-zinc-700 font-medium">
