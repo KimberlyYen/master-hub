@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSchools } from "../lib/schoolStore";
 import FileAttachments from "../components/FileAttachments";
-import { AttachmentInlineList } from "../components/AttachmentList";
+import { AttachmentViewButton } from "../components/AttachmentList";
 import { useAttachments, type Attachment } from "../lib/attachmentStore";
 import PendingUpdates from "../components/PendingUpdates";
 import { usePreferences, getSchoolRank } from "../lib/preferenceStore";
@@ -231,12 +231,7 @@ function DocChecklist({
             {doc.label}
           </label>
 
-          {/* File count badge */}
-          {docFiles.length > 0 && (
-            <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-1.5 py-0.5 shrink-0">
-              📎 {docFiles.length}
-            </span>
-          )}
+          <AttachmentViewButton files={docFiles} />
 
           {/* Upload "+" button */}
           <button
@@ -260,7 +255,6 @@ function DocChecklist({
           />
         </div>
 
-        <AttachmentInlineList files={docFiles} />
       </li>
     );
   }

@@ -6,7 +6,7 @@ import {
   bulkAddAttachments,
   type Attachment,
 } from "../lib/attachmentStore";
-import { AttachmentInlineList } from "../components/AttachmentList";
+import { AttachmentViewButton } from "../components/AttachmentList";
 import type { School } from "./data";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -131,12 +131,7 @@ function MasterDocRow({
           適用 {entry.matchingSchools.length} 校
         </button>
 
-        {/* File count badge */}
-        {docFiles.length > 0 && (
-          <span className="shrink-0 text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-1.5 py-0.5">
-            📎 {docFiles.length}
-          </span>
-        )}
+        <AttachmentViewButton files={docFiles} />
 
         {/* Upload button */}
         <button
@@ -171,7 +166,6 @@ function MasterDocRow({
         </ul>
       )}
 
-      <AttachmentInlineList files={docFiles} />
     </li>
   );
 }

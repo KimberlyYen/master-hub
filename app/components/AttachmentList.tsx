@@ -79,64 +79,60 @@ export function AttachmentLightbox({
   );
 }
 
-// ── Inline list (doc checklist) ───────────────────────────────────────────────
+// ── Row「檢視」按鈕（必繳文件列） ─────────────────────────────────────────────
 
-export function AttachmentInlineList({ files }: { files: Attachment[] }) {
+export function AttachmentViewButton({ files }: { files: Attachment[] }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const images = files.filter((f) => isImage(f.type, f.name));
 
   if (!files.length) return null;
 
-  return (
-    <>
-      <ul className="ml-6 space-y-1.5">
-        {files.map((f) => {
-          const imgIdx = images.indexOf(f);
-          const img = imgIdx >= 0;
+  function viewFile(file: Attachment) {
+    setMenuOpen(false);
+    if (isImage(file.type, file.name)) {
+      setLightboxIndex(images.indexOf(file));
+    } else {
+      window.open(file.url, "_blank", "noopener,noreferrer");
+    }
+  }
 
-          return (
-            <li key={f.id} className="flex items-center gap-2 min-w-0">
-              {img ? (
+  function handleClick() {
+    if (files.length === 1) {
+      viewFile(files[0]);
+    } else {
+      setMenuOpen((v) => !v);
+    }
+  }
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        onClick={handleClick}
+        className="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 rounded-full px-2 py-0.5 transition-colors"
+      >
+        檢視{files.length > 1 ? ` (${files.length})` : ""}
+      </button>
+      {menuOpen && files.length > 1 && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+          <ul className="absolute right-0 top-full mt-1 z-40 min-w-[160px] max-w-[220px] rounded-lg border border-zinc-200 bg-white shadow-lg py-1">
+            {files.map((f) => (
+              <li key={f.id}>
                 <button
                   type="button"
-                  onClick={() => setLightboxIndex(imgIdx)}
-                  className="shrink-0 w-9 h-9 rounded border border-zinc-200 overflow-hidden bg-zinc-100 hover:opacity-80 transition-opacity"
-                  title="檢視圖片"
+                  onClick={() => viewFile(f)}
+                  className="w-full text-left px-3 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50 truncate"
+                  title={f.name}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={f.url} alt="" className="w-full h-full object-cover" />
+                  {f.name}
                 </button>
-              ) : (
-                <span className="shrink-0 w-9 h-9 flex items-center justify-center rounded border border-zinc-200 bg-red-50 text-base">
-                  📄
-                </span>
-              )}
-              <span className="flex-1 min-w-0 text-xs text-zinc-500 truncate" title={f.name}>
-                {f.name}
-              </span>
-              <span className="shrink-0 text-xs text-zinc-300">{formatSize(f.size)}</span>
-              {img ? (
-                <button
-                  type="button"
-                  onClick={() => setLightboxIndex(imgIdx)}
-                  className="shrink-0 text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                >
-                  檢視
-                </button>
-              ) : (
-                <a
-                  href={f.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                >
-                  檢視
-                </a>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       {lightboxIndex !== null && (
         <AttachmentLightbox
           images={images}
@@ -145,6 +141,6 @@ export function AttachmentInlineList({ files }: { files: Attachment[] }) {
           onNav={setLightboxIndex}
         />
       )}
-    </>
+    </div>
   );
 }
