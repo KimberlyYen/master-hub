@@ -149,7 +149,7 @@ function NotifySettings() {
 
   async function save() {
     setSaving(true); setMsg(null);
-    await fetch("/api/config/notify", {
+    const res = await fetch("/api/config/notify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -157,6 +157,12 @@ function NotifySettings() {
         emailTo, emailFrom, emailPassword: emailPwd, emailSmtp, emailPort: Number(emailPort),
       }),
     });
+    const result = await res.json();
+    if (result.vercel) {
+      setMsg({ ok: false, text: result.error });
+      setSaving(false);
+      return;
+    }
     const d = await fetch("/api/config/notify").then(r => r.json());
     setSaved(d); setTgToken(""); setEmailPwd("");
     setMsg({ ok: true, text: "✓ 已儲存" });
@@ -165,11 +171,30 @@ function NotifySettings() {
 
   async function test() {
     setTesting(true); setMsg(null);
-    const res  = await fetch("/api/notify", { method: "POST" });
+    const res = await fetch("/api/notify/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        telegramToken: tgToken,
+        telegramChatId: tgChatId,
+        emailTo,
+        emailFrom,
+        emailPassword: emailPwd,
+        emailSmtp,
+        emailPort: Number(emailPort),
+      }),
+    });
     const data = await res.json();
-    setMsg({ ok: data.ok, text: data.ok ? "✓ 測試通知已送出！" : (data.errors?.join("；") ?? data.error ?? "失敗") });
+    setMsg({
+      ok: data.ok,
+      text: data.ok ? "✓ 測試通知已送出！" : (data.errors?.join("；") ?? data.error ?? "失敗"),
+    });
     setTesting(false);
   }
+
+  const canTestTelegram = !!(tgChatId.trim() && (tgToken.trim() || saved?.hasTelegram));
+  const canTestEmail = !!(emailTo.trim() && emailFrom.trim() && (emailPwd.trim() || saved?.hasEmail));
+  const canTest = canTestTelegram || canTestEmail;
 
   const inp = "rounded-md border border-zinc-200 px-3 py-1.5 text-sm outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-100 placeholder:text-zinc-500 w-full bg-white";
 
@@ -327,12 +352,14 @@ function NotifySettings() {
           className="rounded-lg px-4 py-2 text-sm font-medium bg-zinc-800 text-white hover:bg-zinc-700 disabled:opacity-50 transition-colors">
           {saving ? "儲存中..." : "儲存設定"}
         </button>
-        {(saved?.hasTelegram || saved?.hasEmail) && (
-          <button onClick={test} disabled={testing}
-            className="rounded-lg px-4 py-2 text-sm border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 transition-colors">
-            {testing ? "送出中..." : "測試通知"}
-          </button>
-        )}
+        <button
+          onClick={test}
+          disabled={testing || !canTest}
+          title={canTest ? "送出測試通知" : "請先填寫 Telegram 或 Email 必要欄位"}
+          className="rounded-lg px-4 py-2 text-sm border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          {testing ? "送出中..." : "測試通知"}
+        </button>
         {msg && <p className={`text-xs ${msg.ok ? "text-green-600" : "text-red-500"}`}>{msg.text}</p>}
       </div>
     </div>

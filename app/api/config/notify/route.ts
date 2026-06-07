@@ -16,16 +16,22 @@ const CONFIG_PATH = path.join(process.cwd(), "data", "notify.json");
 
 export async function readNotifyConfig(): Promise<NotifyConfig> {
   // Cloud deployment (Vercel): read from environment variables
-  if (process.env.TELEGRAM_TOKEN) {
-    return {
-      telegramToken:  process.env.TELEGRAM_TOKEN,
-      telegramChatId: process.env.TELEGRAM_CHAT_ID,
-      emailTo:        process.env.EMAIL_TO,
-      emailFrom:      process.env.EMAIL_FROM,
-      emailPassword:  process.env.EMAIL_PASSWORD,
-      emailSmtp:      process.env.EMAIL_SMTP,
-      emailPort:      process.env.EMAIL_PORT ? Number(process.env.EMAIL_PORT) : undefined,
-    };
+  const fromEnv: NotifyConfig = {
+    telegramToken:  process.env.TELEGRAM_TOKEN,
+    telegramChatId: process.env.TELEGRAM_CHAT_ID,
+    emailTo:        process.env.EMAIL_TO,
+    emailFrom:      process.env.EMAIL_FROM,
+    emailPassword:  process.env.EMAIL_PASSWORD,
+    emailSmtp:      process.env.EMAIL_SMTP,
+    emailPort:      process.env.EMAIL_PORT ? Number(process.env.EMAIL_PORT) : undefined,
+  };
+  if (
+    process.env.VERCEL ||
+    fromEnv.telegramToken ||
+    fromEnv.emailFrom ||
+    fromEnv.emailPassword
+  ) {
+    return fromEnv;
   }
   // Local: read from data/notify.json
   try {
@@ -80,6 +86,15 @@ export async function POST(req: NextRequest) {
     if (body.emailPassword && !body.emailPassword.startsWith("●")) next.emailPassword = body.emailPassword;
     if (body.emailSmtp)  next.emailSmtp  = body.emailSmtp;
     if (body.emailPort)  next.emailPort  = body.emailPort;
+  }
+
+  if (process.env.VERCEL) {
+    return NextResponse.json({
+      ok: false,
+      vercel: true,
+      error:
+        "Vercel 上請至 Project Settings → Environment Variables 設定通知變數，再 Redeploy。表單儲存僅適用本機開發。",
+    });
   }
 
   await writeNotifyConfig(next);
