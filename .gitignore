@@ -40,6 +40,15 @@ Thumbs.db
 *.exe
 *.war
 
+# Local secrets & config
+.env.local
+.env*.local
+data/notify.json
+
+# Build artifacts
+tsconfig.tsbuildinfo
+.next/
+
 # Large media files
 *.mp4
 *.tiff
