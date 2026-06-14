@@ -33,11 +33,13 @@ export function useSchools() {
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const parsed: School[] = JSON.parse(raw);
-        // Migrate: back-fill ref115 for any school that doesn't have it yet
         const migrated = parsed.map((s) => mergeWithDefault(s, defaultSchools));
-        setSchools(migrated);
-        // Persist migration result
-        localStorage.setItem(KEY, JSON.stringify(migrated));
+        const missing = defaultSchools.filter(
+          (d) => !migrated.some((s) => s.id === d.id)
+        );
+        const next = [...migrated, ...missing];
+        setSchools(next);
+        localStorage.setItem(KEY, JSON.stringify(next));
       } else {
         localStorage.setItem(KEY, JSON.stringify(defaultSchools));
         setSchools(defaultSchools);

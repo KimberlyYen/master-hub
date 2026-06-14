@@ -21,6 +21,7 @@ const TARGETS: ScrapeTarget[] = [
   { ids: ["ntust-emrd"],         name: "台灣科技大學 EMRD",      url: "https://emrd.ntust.edu.tw/p/403-1039-1293.php?Lang=zh-tw" },
   { ids: ["ttu-cs"],             name: "大同科技大學 資工系",    url: "https://cse.ttu.edu.tw/" },
   { ids: ["tku-cs"],             name: "淡江大學 資工系",        url: "https://csie.tku.edu.tw/" },
+  { ids: ["tku-im"],             name: "淡江大學 資管系",        url: "https://www.im.tku.edu.tw/" },
 ];
 
 function extractText(html: string): string {
