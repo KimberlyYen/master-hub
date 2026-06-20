@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 data/
 .env.local
+
+# OAuth credentials（勿提交）
+docs/client_secret*.json

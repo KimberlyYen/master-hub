@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "./components/Sidebar";
+import AppShell from "./components/AppShell";
+import { auth } from "@/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,28 +16,23 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Master Hub",
-  description: "個人工具集",
+  description: "研究所在職專班申請追蹤系統",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html
-      lang="en"
+      lang="zh-Hant"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full">
-        <Sidebar />
-        <div className="flex flex-1 flex-col min-w-0">
-          {/* Mobile top bar — creates space below the fixed hamburger button */}
-          <div className="md:hidden flex h-12 shrink-0 items-center border-b border-zinc-200 bg-white px-4 pl-14">
-            <span className="text-sm font-semibold text-zinc-600">Master Hub</span>
-          </div>
-          {children}
-        </div>
+      <body className="flex min-h-screen w-full">
+        <AppShell session={session}>{children}</AppShell>
       </body>
     </html>
   );

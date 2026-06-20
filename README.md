@@ -6,6 +6,7 @@
 
 ## 功能
 
+- **Google 登入** — 使用 Google OAuth 保護應用程式，未登入會導向登入頁
 - **申請追蹤** — 追蹤各校申請狀態（報名中、審查中、待面試、錄取等），勾選必繳文件進度
 - **前三志願** — 在申請頁標記第一～第三志願
 - **文件總覽** — 跨校檢視必繳文件與上傳附件
@@ -58,6 +59,13 @@ npm run dev
 複製並編輯 `.env.local`（此檔案不會被 git 追蹤）：
 
 ```bash
+# Google 登入（必填）
+AUTH_SECRET=                    # openssl rand -base64 32
+AUTH_URL=http://localhost:3000  # 正式環境改為你的網域
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+AUTH_ALLOWED_EMAILS=            # 選填，逗號分隔允許的 Gmail
+
 # Supabase（附件上傳，選用）
 SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_URL=
@@ -79,6 +87,16 @@ CRON_SECRET=
 ```
 
 未設定 Supabase 時，附件相關功能會停用，其餘功能仍可正常使用。
+
+### Google OAuth 設定
+
+1. 前往 [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
+2. 建立 **OAuth 2.0 Client ID**（Web application）
+3. 設定授權重新導向 URI：
+   - 本機：`http://localhost:3000/api/auth/callback/google`
+   - 正式：`https://你的網域/api/auth/callback/google`
+4. 將 Client ID / Secret 填入 `.env.local` 或 Vercel 環境變數
+5. 若只要特定帳號能登入，設定 `AUTH_ALLOWED_EMAILS=your@gmail.com`
 
 ## 指令
 

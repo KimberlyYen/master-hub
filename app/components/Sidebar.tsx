@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import type { Session } from "next-auth";
+import UserMenu from "./UserMenu";
 
 type NavItem = { label: string; href: string; icon: string };
 
@@ -59,7 +61,7 @@ function NavLink({
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ session }: { session: Session | null }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -142,6 +144,7 @@ export default function Sidebar() {
           </p>
         </div>
         {navList(true)}
+        <UserMenu session={session} collapsed={false} />
       </aside>
 
       {/* ── Desktop sidebar (in-flow, collapsible) ── */}
@@ -166,6 +169,7 @@ export default function Sidebar() {
         </div>
 
         {navList(false)}
+        <UserMenu session={session} collapsed={collapsed} />
       </aside>
     </>
   );
