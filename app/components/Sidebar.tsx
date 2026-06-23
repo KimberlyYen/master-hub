@@ -61,7 +61,13 @@ function NavLink({
   );
 }
 
-export default function Sidebar({ session }: { session: Session | null }) {
+export default function Sidebar({
+  session,
+  isGuest,
+}: {
+  session: Session | null;
+  isGuest: boolean;
+}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -144,7 +150,7 @@ export default function Sidebar({ session }: { session: Session | null }) {
           </p>
         </div>
         {navList(true)}
-        <UserMenu session={session} collapsed={false} />
+        <UserMenu session={session} isGuest={isGuest} collapsed={false} />
       </aside>
 
       {/* ── Desktop sidebar (in-flow, collapsible) ── */}
@@ -169,7 +175,7 @@ export default function Sidebar({ session }: { session: Session | null }) {
         </div>
 
         {navList(false)}
-        <UserMenu session={session} collapsed={collapsed} />
+        <UserMenu session={session} isGuest={isGuest} collapsed={collapsed} />
       </aside>
     </>
   );

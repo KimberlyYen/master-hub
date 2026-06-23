@@ -61,7 +61,8 @@ npm run dev
 ```bash
 # Google 登入（必填）
 AUTH_SECRET=                    # openssl rand -base64 32
-AUTH_URL=http://localhost:3000  # 正式環境改為你的網域
+AUTH_TRUST_HOST=true            # 本機 dev 建議開啟，port 變動時不必改 AUTH_URL
+# AUTH_URL=                     # 正式環境再設為你的網域，例如 https://master-hub-dun.vercel.app
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 AUTH_ALLOWED_EMAILS=            # 選填，逗號分隔允許的 Gmail
@@ -92,8 +93,8 @@ CRON_SECRET=
 
 1. 前往 [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
 2. 建立 **OAuth 2.0 Client ID**（Web application）
-3. 設定授權重新導向 URI：
-   - 本機：`http://localhost:3000/api/auth/callback/google`
+3. 設定授權重新導向 URI（本機 port 依 `npm run dev` 顯示為準）：
+   - 本機：`http://localhost:3000/api/auth/callback/google`（若改用 3002 等 port 需一併加入）
    - 正式：`https://你的網域/api/auth/callback/google`
 4. 將 Client ID / Secret 填入 `.env.local` 或 Vercel 環境變數
 5. 若只要特定帳號能登入，設定 `AUTH_ALLOWED_EMAILS=your@gmail.com`

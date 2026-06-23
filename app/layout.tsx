@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AppShell from "./components/AppShell";
 import { auth } from "@/auth";
+import { cookies } from "next/headers";
+import { GUEST_MODE_COOKIE, hasGuestCookie } from "./lib/guestMode";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +27,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+  const cookieStore = await cookies();
+  const isGuest =
+    !session?.user && hasGuestCookie(cookieStore.get(GUEST_MODE_COOKIE)?.value);
 
   return (
     <html
@@ -32,7 +37,9 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-screen w-full">
-        <AppShell session={session}>{children}</AppShell>
+        <AppShell session={session} isGuest={isGuest}>
+          {children}
+        </AppShell>
       </body>
     </html>
   );

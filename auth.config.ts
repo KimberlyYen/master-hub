@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { GUEST_MODE_COOKIE, hasGuestCookie } from "./app/lib/guestMode";
 
 export const authConfig = {
   pages: {
@@ -6,8 +7,9 @@ export const authConfig = {
   },
   providers: [],
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request: { nextUrl, cookies } }) {
       const isLoggedIn = !!auth?.user;
+      const isGuest = hasGuestCookie(cookies.get(GUEST_MODE_COOKIE)?.value);
       const pathname = nextUrl.pathname;
 
       if (pathname.startsWith("/api/auth") || pathname.startsWith("/api/notify")) {
@@ -15,13 +17,13 @@ export const authConfig = {
       }
 
       if (pathname === "/login") {
-        if (isLoggedIn) {
+        if (isLoggedIn || isGuest) {
           return Response.redirect(new URL("/applications", nextUrl));
         }
         return true;
       }
 
-      return isLoggedIn;
+      return isLoggedIn || isGuest;
     },
   },
 } satisfies NextAuthConfig;

@@ -24,3 +24,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Google Translate：隱藏預設橫幅，保留自訂語言選單 */
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+#goog-gt-tt,
+.goog-te-gadget,
+.goog-te-menu-value,
+.goog-te-menu-frame,
+.skiptranslate iframe {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
+}
+
+#google_translate_element {
+  display: none;
+}

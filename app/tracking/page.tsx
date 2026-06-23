@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   useTracking,
   nextRunDate,
@@ -19,21 +19,35 @@ const PRESETS = [
   { label: "每三天",   days: 3  },
 ] as const;
 
-// Cron expression generator
-function toCron(days: number): string {
-  if (days >= 28) return "0 9 1 * *";          // 每月1日 09:00
-  if (days >= 14) return "0 9 1,15 * *";       // 每月1,15日
-  if (days >= 7)  return "0 9 * * 1";           // 每週一
-  if (days >= 3)  return "0 9 */3 * *";         // 每3天
-  return `0 9 */${days} * *`;
+function formatHour(hour: number): string {
+  return `${String(hour).padStart(2, "0")}:00`;
 }
 
-function cronDescription(days: number): string {
-  if (days >= 28) return "每月 1 日早上 9:00";
-  if (days >= 14) return "每月 1 日、15 日早上 9:00";
-  if (days >= 7)  return "每週一早上 9:00";
-  if (days >= 3)  return "每 3 天早上 9:00";
-  return `每 ${days} 天早上 9:00`;
+function twToUtcHour(hourTW: number): number {
+  return (hourTW - 8 + 24) % 24;
+}
+
+// Cron expression generator（本機 crontab 使用台灣時間）
+function toCron(days: number, hour: number): string {
+  if (days >= 28) return `0 ${hour} 1 * *`;
+  if (days >= 14) return `0 ${hour} 1,15 * *`;
+  if (days >= 7)  return `0 ${hour} * * 1`;
+  if (days >= 3)  return `0 ${hour} */3 * *`;
+  return `0 ${hour} */${days} * *`;
+}
+
+function toVercelCron(days: number, hourTW: number): string {
+  const utcH = twToUtcHour(hourTW);
+  return toCron(days, utcH);
+}
+
+function cronDescription(days: number, hour: number): string {
+  const time = `${formatHour(hour)}（台灣時間）`;
+  if (days >= 28) return `每月 1 日 ${time}`;
+  if (days >= 14) return `每月 1 日、15 日 ${time}`;
+  if (days >= 7)  return `每週一 ${time}`;
+  if (days >= 3)  return `每 3 天 ${time}`;
+  return `每 ${days} 天 ${time}`;
 }
 
 // ── Status badge ──────────────────────────────────────────────────────────────
@@ -368,15 +382,13 @@ function NotifySettings() {
 
 // ── Cron setup section ────────────────────────────────────────────────────────
 
-function CronSetup({ intervalDays }: { intervalDays: number }) {
+function CronSetup({ intervalDays, runHour }: { intervalDays: number; runHour: number }) {
   const [tab, setTab]     = useState<"vercel" | "local">("vercel");
   const [copied, setCopied] = useState(false);
-  const cron = toCron(intervalDays);
-  const desc = cronDescription(intervalDays);
-
-  // Vercel Cron uses UTC. Taiwan = UTC+8, so 09:00 TW = 01:00 UTC.
-  const [utcH, utcM] = [1, 0];
-  const vercelCron   = cron.replace(/^0 \d+/, `${utcM} ${utcH}`);
+  const cron = toCron(intervalDays, runHour);
+  const desc = cronDescription(intervalDays, runHour);
+  const utcH = twToUtcHour(runHour);
+  const vercelCron = toVercelCron(intervalDays, runHour);
   const vercelJson   = JSON.stringify({ crons: [{ path: "/api/notify", schedule: vercelCron }] }, null, 2);
 
   function copy(text: string) {
@@ -477,7 +489,7 @@ function CronSetup({ intervalDays }: { intervalDays: number }) {
               <CodeBlock text={vercelJson} onCopy={copy} copied={copied} />
               <p className="text-xs text-zinc-400">
                 如需調整時間，修改 <code className="bg-zinc-100 px-1 rounded">schedule</code> 後 git commit + push 即可。
-                注意：Vercel Cron 使用 <strong className="text-zinc-600">UTC 時間</strong>，台灣時間 09:00 = UTC 01:00。
+                注意：Vercel Cron 使用 <strong className="text-zinc-600">UTC 時間</strong>，台灣時間 {formatHour(runHour)} = UTC {formatHour(utcH)}。
               </p>
               <p className="text-xs text-zinc-400">
                 部署後可在 Vercel 專案頁 → 左側 sidebar →{" "}
@@ -537,19 +549,53 @@ function CodeBlock({ text, onCopy, copied }: { text: string; onCopy: (t: string)
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function TrackingPage() {
-  const { config, saveConfig, history, latestRun, running, loaded, runScrape, isDue } = useTracking();
+  const { config, saveConfig, history, latestRun, running, loaded, runScrape, runMessage, isDue } = useTracking();
+  const autoRunStarted = useRef(false);
+  const [draftDays, setDraftDays] = useState(config.intervalDays);
+  const [draftRunHour, setDraftRunHour] = useState(config.runHour);
+  const [draftAutoRun, setDraftAutoRun] = useState(config.autoRun);
   const [customDays, setCustomDays] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [savingInterval, setSavingInterval] = useState(false);
+  const [intervalMsg, setIntervalMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loaded) return;
+    setDraftDays(config.intervalDays);
+    setDraftRunHour(config.runHour);
+    setDraftAutoRun(config.autoRun);
+  }, [loaded, config.intervalDays, config.runHour, config.autoRun]);
+
+  useEffect(() => {
+    if (!loaded || !config.autoRun || !isDue || running || autoRunStarted.current) return;
+    autoRunStarted.current = true;
+    void runScrape();
+  }, [loaded, config.autoRun, isDue, running, runScrape]);
 
   if (!loaded) return (
     <div className="flex-1 flex items-center justify-center text-sm text-zinc-400">載入中...</div>
   );
 
   const next = config.lastRun ? nextRunDate(config) : null;
+  const intervalDirty =
+    draftDays !== config.intervalDays ||
+    draftRunHour !== config.runHour ||
+    draftAutoRun !== config.autoRun;
 
-  function applyInterval(days: number) {
-    saveConfig({ ...config, intervalDays: days });
+  function applyCustomDays() {
+    const days = parseInt(customDays, 10);
+    if (!days || days < 1) return;
+    setDraftDays(days);
+  }
+
+  function saveInterval() {
+    setSavingInterval(true);
+    setIntervalMsg(null);
+    saveConfig({ ...config, intervalDays: draftDays, runHour: draftRunHour, autoRun: draftAutoRun });
     setCustomDays("");
+    setIntervalMsg("✓ 已儲存");
+    setSavingInterval(false);
+    setTimeout(() => setIntervalMsg(null), 2000);
   }
 
   return (
@@ -563,12 +609,17 @@ export default function TrackingPage() {
 
         {/* Interval */}
         <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-4">
-          <p className="text-sm font-semibold text-zinc-700">爬取頻率</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-zinc-700">爬取頻率</p>
+            {intervalDirty && (
+              <span className="text-xs text-amber-600 font-medium">有未儲存的變更</span>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2">
             {PRESETS.map(p => {
-              const active = config.intervalDays === p.days;
+              const active = draftDays === p.days;
               return (
-                <button key={p.days} onClick={() => applyInterval(p.days)}
+                <button key={p.days} onClick={() => { setDraftDays(p.days); setCustomDays(""); }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                     active ? "bg-zinc-800 text-white border-zinc-800"
                            : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"}`}>
@@ -579,24 +630,55 @@ export default function TrackingPage() {
             <div className="flex items-center gap-1.5">
               <input type="number" min={1} placeholder="自訂" value={customDays}
                 onChange={e => setCustomDays(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && customDays) applyInterval(parseInt(customDays)); }}
+                onKeyDown={e => { if (e.key === "Enter") applyCustomDays(); }}
                 className="w-16 rounded-lg border border-zinc-200 px-2 py-2 text-sm text-center outline-none focus:border-blue-300" />
               <span className="text-sm text-zinc-400">天</span>
-              <button onClick={() => customDays && applyInterval(parseInt(customDays))}
+              <button onClick={applyCustomDays}
                 disabled={!customDays}
                 className="text-xs text-blue-500 hover:underline disabled:opacity-40">套用</button>
             </div>
           </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <label htmlFor="run-hour" className="text-sm text-zinc-600">執行時間（台灣時間）</label>
+            <select
+              id="run-hour"
+              value={draftRunHour}
+              onChange={e => setDraftRunHour(Number(e.target.value))}
+              className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 outline-none focus:border-blue-300 bg-white"
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>{formatHour(h)}</option>
+              ))}
+            </select>
+          </div>
           <p className="text-xs text-zinc-400">
-            目前：每 <span className="font-semibold text-zinc-600">{config.intervalDays}</span> 天 ·{" "}
-            {cronDescription(config.intervalDays)}
+            預覽：每 <span className="font-semibold text-zinc-600">{draftDays}</span> 天 ·{" "}
+            {cronDescription(draftDays, draftRunHour)}
           </p>
+          {intervalDirty && (
+            <p className="text-xs text-zinc-400">
+              目前已儲存：每 <span className="font-semibold text-zinc-600">{config.intervalDays}</span> 天 ·{" "}
+              {cronDescription(config.intervalDays, config.runHour)}
+            </p>
+          )}
           <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" checked={config.autoRun}
-              onChange={e => saveConfig({ ...config, autoRun: e.target.checked })}
+            <input type="checkbox" checked={draftAutoRun}
+              onChange={e => setDraftAutoRun(e.target.checked)}
               className="accent-zinc-700" />
             <span className="text-sm text-zinc-600">開啟此頁面時，若已到期則自動爬取</span>
           </label>
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              onClick={saveInterval}
+              disabled={savingInterval || !intervalDirty}
+              className="rounded-lg px-4 py-2 text-sm font-medium bg-zinc-800 text-white hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+            >
+              {savingInterval ? "儲存中..." : "儲存設定"}
+            </button>
+            {intervalMsg && (
+              <p className="text-xs text-green-600">{intervalMsg}</p>
+            )}
+          </div>
         </div>
 
         {/* Status & manual run */}
@@ -622,6 +704,11 @@ export default function TrackingPage() {
             className="flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium bg-zinc-800 text-white hover:bg-zinc-700 disabled:opacity-60 transition-colors">
             {running ? <><span className="animate-spin">⟳</span>爬取中…</> : "⟳ 立即爬取全部"}
           </button>
+          {runMessage && (
+            <p className={`text-xs ${runMessage.ok ? "text-green-600" : "text-red-600"}`}>
+              {runMessage.text}
+            </p>
+          )}
           {isDue && !running && (
             <p className="text-xs text-amber-600">距上次爬取已超過 {config.intervalDays} 天，建議重新爬取。</p>
           )}
@@ -631,7 +718,7 @@ export default function TrackingPage() {
         <NotifySettings />
 
         {/* Cron setup */}
-        <CronSetup intervalDays={config.intervalDays} />
+        <CronSetup intervalDays={config.intervalDays} runHour={config.runHour} />
 
         {/* Latest results */}
         {latestRun && (

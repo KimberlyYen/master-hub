@@ -8,6 +8,7 @@ const HISTORY_KEY = "master-hub:tracking:history";
 
 export type TrackingConfig = {
   intervalDays: number;   // 爬取間隔（天）
+  runHour: number;        // 排程執行時刻（0–23，台灣時間）
   autoRun: boolean;       // 頁面載入時自動爬取
   lastRun?: string;       // ISO date of last scrape
 };
@@ -19,13 +20,25 @@ export type ScrapeRun = {
 
 const DEFAULT_CONFIG: TrackingConfig = {
   intervalDays: 30,
+  runHour: 9,
   autoRun: true,
 };
+
+function clampRunHour(hour: unknown): number {
+  const n = typeof hour === "number" && !Number.isNaN(hour) ? Math.floor(hour) : DEFAULT_CONFIG.runHour;
+  return Math.max(0, Math.min(23, n));
+}
 
 function loadConfig(): TrackingConfig {
   try {
     const raw = localStorage.getItem(CONFIG_KEY);
-    return raw ? { ...DEFAULT_CONFIG, ...JSON.parse(raw) } : DEFAULT_CONFIG;
+    if (!raw) return DEFAULT_CONFIG;
+    const parsed = JSON.parse(raw) as Partial<TrackingConfig>;
+    return {
+      ...DEFAULT_CONFIG,
+      ...parsed,
+      runHour: clampRunHour(parsed.runHour),
+    };
   } catch {
     return DEFAULT_CONFIG;
   }
@@ -47,14 +60,17 @@ function saveHistory(runs: ScrapeRun[]) {
 
 export function isDue(config: TrackingConfig): boolean {
   if (!config.lastRun) return true;
-  const ms = config.intervalDays * 24 * 60 * 60 * 1000;
-  return Date.now() - new Date(config.lastRun).getTime() >= ms;
+  const next = nextRunDate(config);
+  return next ? Date.now() >= next.getTime() : true;
 }
 
 export function nextRunDate(config: TrackingConfig): Date | null {
   if (!config.lastRun) return null;
-  const ms = config.intervalDays * 24 * 60 * 60 * 1000;
-  return new Date(new Date(config.lastRun).getTime() + ms);
+  const hour = clampRunHour(config.runHour);
+  const next = new Date(config.lastRun);
+  next.setDate(next.getDate() + config.intervalDays);
+  next.setHours(hour, 0, 0, 0);
+  return next;
 }
 
 export function useTracking() {
@@ -62,6 +78,7 @@ export function useTracking() {
   const [history, setHistory] = useState<ScrapeRun[]>([]);
   const [running, setRunning] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [runMessage, setRunMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     setConfig(loadConfig());
@@ -78,13 +95,23 @@ export function useTracking() {
     async (schoolIds?: string[]): Promise<ScrapeRun | null> => {
       if (running) return null;
       setRunning(true);
+      setRunMessage(null);
       try {
-        const res = await fetch("/api/scrape", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(schoolIds ? { schoolIds } : {}),
-        });
+        const res = await fetch(
+          schoolIds ? "/api/scrape" : "/api/notify",
+          schoolIds
+            ? {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ schoolIds }),
+              }
+            : { method: "POST" }
+        );
         const data = await res.json();
+        if (!res.ok) {
+          setRunMessage({ ok: false, text: data.error ?? "爬取失敗" });
+          return null;
+        }
         const run: ScrapeRun = {
           ranAt: data.ranAt ?? new Date().toISOString(),
           results: data.results,
@@ -96,7 +123,18 @@ export function useTracking() {
         });
         const next = { ...config, lastRun: run.ranAt };
         saveConfig(next);
+        if (data.errors?.length) {
+          setRunMessage({
+            ok: false,
+            text: `爬取完成，但通知有部分失敗：${data.errors.join("；")}`,
+          });
+        } else {
+          setRunMessage({ ok: true, text: "✓ 爬取完成，已發送通知" });
+        }
         return run;
+      } catch {
+        setRunMessage({ ok: false, text: "爬取失敗，請稍後再試" });
+        return null;
       } finally {
         setRunning(false);
       }
@@ -114,6 +152,7 @@ export function useTracking() {
     running,
     loaded,
     runScrape,
+    runMessage,
     isDue: loaded ? isDue(config) : false,
   };
 }

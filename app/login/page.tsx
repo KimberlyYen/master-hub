@@ -1,4 +1,4 @@
-import { loginWithGoogle } from "@/app/actions/auth";
+import { loginWithGoogle, enterGuestMode } from "@/app/actions/auth";
 
 const ERROR_MESSAGES: Record<string, string> = {
   AccessDenied: "此 Google 帳號未獲授權，請聯絡管理員或使用允許的帳號登入。",
@@ -50,15 +50,28 @@ export default async function LoginPage({
         )}
 
         {googleConfigured ? (
-          <form action={loginWithGoogle}>
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
-            >
-              <GoogleIcon />
-              使用 Google 登入
-            </button>
-          </form>
+          <div className="space-y-3">
+            <form action={loginWithGoogle}>
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+              >
+                <GoogleIcon />
+                使用 Google 登入
+              </button>
+            </form>
+            <form action={enterGuestMode}>
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100"
+              >
+                以訪客身分繼續
+              </button>
+            </form>
+            <p className="text-center text-xs text-zinc-400">
+              訪客模式資料僅保存在本機瀏覽器
+            </p>
+          </div>
         ) : (
           <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <p className="font-medium">設定步驟</p>
@@ -83,6 +96,14 @@ export default async function LoginPage({
               </li>
               <li>填入 .env.local 後重啟 npm run dev</li>
             </ol>
+            <form action={enterGuestMode} className="pt-2">
+              <button
+                type="submit"
+                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50"
+              >
+                以訪客身分繼續
+              </button>
+            </form>
           </div>
         )}
     </div>
