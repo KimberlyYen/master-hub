@@ -22,10 +22,7 @@ export default function AppShell({
     return (
       <>
         <GoogleTranslateProvider />
-        <main className="relative flex min-h-screen w-full flex-1 items-center justify-center bg-zinc-50 px-4">
-          <div className="absolute top-4 right-4 z-10">
-            <LanguageSwitcher />
-          </div>
+        <main className="flex min-h-screen w-full flex-1 items-center justify-center bg-zinc-50 px-4">
           {children}
         </main>
       </>

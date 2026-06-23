@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { loginWithGoogle, enterGuestMode } from "@/app/actions/auth";
+import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 
 const ERROR_MESSAGES: Record<string, string> = {
   AccessDenied: "此 Google 帳號未獲授權，請聯絡管理員或使用允許的帳號登入。",
@@ -50,6 +51,9 @@ export default async function LoginPage({
 
   return (
     <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
+        <div className="mb-6 flex justify-end border-b border-zinc-100 pb-4">
+          <LanguageSwitcher />
+        </div>
         <div className="mb-8 text-center">
           <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
             Master Hub
