@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { loginWithGoogle, enterGuestMode } from "@/app/actions/auth";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -16,6 +17,17 @@ function isGoogleConfigured() {
   );
 }
 
+function getOAuthCallbackUrl(headerList: Headers): string {
+  const host =
+    headerList.get("x-forwarded-host") ??
+    headerList.get("host") ??
+    "localhost:3000";
+  const proto =
+    headerList.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}/api/auth/callback/google`;
+}
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -23,6 +35,13 @@ export default async function LoginPage({
 }) {
   const { error } = await searchParams;
   const googleConfigured = isGoogleConfigured();
+  const headerList = await headers();
+  const callbackUrl = getOAuthCallbackUrl(headerList);
+  const host =
+    headerList.get("x-forwarded-host") ??
+    headerList.get("host") ??
+    "localhost:3000";
+  const isLocal = host.startsWith("localhost");
   const errorMessage = error
     ? (ERROR_MESSAGES[error] ?? ERROR_MESSAGES.Default)
     : !googleConfigured
@@ -89,10 +108,22 @@ export default async function LoginPage({
                 建立 OAuth 2.0 Client ID
               </li>
               <li>
-                重新導向 URI：
-                <code className="mt-1 block rounded bg-white px-2 py-1 text-[11px]">
-                  http://localhost:3000/api/auth/callback/google
+                重新導向 URI（請在 Google Cloud Console 的 OAuth Client 加入此網址）：
+                <code className="mt-1 block break-all rounded bg-white px-2 py-1 text-[11px]">
+                  {callbackUrl}
                 </code>
+                <p className="mt-1.5 text-[11px] leading-relaxed text-amber-800/80">
+                  {isLocal ? (
+                    <>
+                      正式環境另需加入：
+                      <code className="mt-0.5 block break-all rounded bg-white px-2 py-1">
+                        https://master-hub-dun.vercel.app/api/auth/callback/google
+                      </code>
+                    </>
+                  ) : (
+                    <>本機開發另需加入 localhost 對應 port 的 callback URL。</>
+                  )}
+                </p>
               </li>
               <li>填入 .env.local 後重啟 npm run dev</li>
             </ol>
