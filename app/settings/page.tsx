@@ -175,7 +175,7 @@ function Field({
 }
 
 const inputCls =
-  "rounded-md border border-zinc-200 px-3 py-1.5 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 placeholder:text-zinc-500 bg-white";
+  "rounded-md border border-zinc-200 px-3 py-1.5 text-sm font-semibold text-zinc-900 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 placeholder:font-normal placeholder:text-zinc-400 bg-white";
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
