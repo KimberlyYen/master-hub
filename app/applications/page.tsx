@@ -365,10 +365,29 @@ function ApplicationCard({
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start justify-between gap-2 mb-1">
           <div className="min-w-0">
-            <p className="text-xs text-zinc-400 font-medium">{school.school}</p>
-            <h3 className="text-sm font-semibold text-zinc-800 leading-snug">
-              {school.department}
-            </h3>
+            {school.website ? (
+              <a
+                href={school.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block min-w-0 rounded-md -mx-1 px-1"
+                title="前往系所官網"
+              >
+                <p className="text-xs font-medium text-blue-600 underline underline-offset-2 decoration-blue-300 group-hover:text-blue-700 group-hover:decoration-blue-500">
+                  {school.school}
+                </p>
+                <h3 className="text-sm font-semibold text-blue-600 underline underline-offset-2 decoration-blue-300 group-hover:text-blue-700 group-hover:decoration-blue-500 leading-snug">
+                  {school.department}
+                </h3>
+              </a>
+            ) : (
+              <>
+                <p className="text-xs text-zinc-400 font-medium">{school.school}</p>
+                <h3 className="text-sm font-semibold text-zinc-800 leading-snug">
+                  {school.department}
+                </h3>
+              </>
+            )}
           </div>
           <select
             value={status}
