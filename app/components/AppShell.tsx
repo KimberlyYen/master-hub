@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import UserBadge from "./UserBadge";
 import LanguageSwitcher from "./LanguageSwitcher";
 import GoogleTranslateProvider from "./GoogleTranslateProvider";
+import { UserStorageProvider } from "./UserStorageProvider";
 
 export default function AppShell({
   children,
@@ -22,9 +23,11 @@ export default function AppShell({
     return (
       <>
         <GoogleTranslateProvider />
-        <main className="flex min-h-screen w-full flex-1 items-center justify-center bg-zinc-50 px-4">
-          {children}
-        </main>
+        <UserStorageProvider session={session} isGuest={isGuest}>
+          <main className="flex min-h-screen w-full flex-1 items-center justify-center bg-zinc-50 px-4">
+            {children}
+          </main>
+        </UserStorageProvider>
       </>
     );
   }
@@ -32,6 +35,7 @@ export default function AppShell({
   return (
     <>
       <GoogleTranslateProvider />
+      <UserStorageProvider session={session} isGuest={isGuest}>
       <div className="flex min-h-screen w-full flex-1">
       <Sidebar session={session} isGuest={isGuest} />
       <div className="flex flex-1 flex-col min-w-0">
@@ -47,6 +51,7 @@ export default function AppShell({
         {children}
       </div>
       </div>
+      </UserStorageProvider>
     </>
   );
 }

@@ -3,6 +3,8 @@
 import { useState, useCallback } from "react";
 import { useSchools } from "../lib/schoolStore";
 import type { School } from "../applications/data";
+import BrochureImageImport from "../components/BrochureImageImport";
+import type { BrochureFormPatch } from "../lib/brochureParser";
 
 // ── Form types ────────────────────────────────────────────────────────────────
 
@@ -128,6 +130,28 @@ function formToSchool(f: FormState): Omit<School, "id"> {
   };
 }
 
+function applyBrochurePatch(form: FormState, patch: BrochureFormPatch): FormState {
+  return {
+    ...form,
+    ...(patch.school ? { school: patch.school } : {}),
+    ...(patch.department ? { department: patch.department } : {}),
+    ...(patch.code ? { code: patch.code } : {}),
+    ...(patch.quota ? { quota: patch.quota } : {}),
+    ...(patch.workExpRequired ? { workExpRequired: patch.workExpRequired } : {}),
+    ...(patch.applicationFee ? { applicationFee: patch.applicationFee } : {}),
+    ...(patch.classSchedule ? { classSchedule: patch.classSchedule } : {}),
+    ...(patch.brochureDate ? { brochureDate: patch.brochureDate } : {}),
+    ...(patch.registrationDeadline ? { registrationDeadline: patch.registrationDeadline } : {}),
+    ...(patch.documentDeadline ? { documentDeadline: patch.documentDeadline } : {}),
+    ...(patch.examDate ? { examDate: patch.examDate } : {}),
+    ...(patch.resultDate ? { resultDate: patch.resultDate } : {}),
+    ...(patch.contact ? { contact: patch.contact } : {}),
+    ...(patch.remarks ? { remarks: patch.remarks } : {}),
+    ...(patch.scoring?.length ? { scoring: patch.scoring } : {}),
+    ...(patch.requiredDocuments?.length ? { requiredDocuments: patch.requiredDocuments } : {}),
+  };
+}
+
 // ── Field helpers ─────────────────────────────────────────────────────────────
 
 function Field({
@@ -193,6 +217,9 @@ function SchoolForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <BrochureImageImport
+        onApply={(patch) => setForm((prev) => applyBrochurePatch(prev, patch))}
+      />
       {/* 基本資訊 */}
       <div>
         <SectionTitle>基本資訊</SectionTitle>

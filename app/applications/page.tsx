@@ -8,6 +8,7 @@ import { AttachmentViewButton } from "../components/AttachmentList";
 import { useAttachments, type Attachment } from "../lib/attachmentStore";
 import PendingUpdates from "../components/PendingUpdates";
 import { usePreferences, getSchoolRank } from "../lib/preferenceStore";
+import { useUserStorage } from "../components/UserStorageProvider";
 import {
   ALL_STATUSES,
   STATUS_COLORS,
@@ -535,6 +536,7 @@ function detectCategory(department: string): "資管" | "資工" {
 export default function ApplicationsPage() {
   const { schools, loaded } = useSchools();
   const { preferences, loaded: prefsLoaded, setChoiceBySchool } = usePreferences();
+  const { isLoggedIn, isGuest, displayName } = useUserStorage();
   const [allState, setAllState] = useState<AllUserState>({});
   const [categoryTab, setCategoryTab] = useState<CategoryTab>("全部");
   const [filterStatus, setFilterStatus] = useState<Status | "全部">("全部");
@@ -726,6 +728,16 @@ export default function ApplicationsPage() {
         {categoryTab === "前三志願" && prefCount === 0 && (
           <p className="text-sm text-zinc-500">
             在「全部」、「資管」或「資工」分頁的學校卡片上，從「志願」下拉選單設定前三志願。
+          </p>
+        )}
+
+        {categoryTab === "前三志願" && prefCount > 0 && (
+          <p className="text-xs text-zinc-400">
+            {isLoggedIn
+              ? `志願已儲存至 ${displayName ?? "你的 Google 帳號"}，換帳號登入會載入各自的志願。`
+              : isGuest
+                ? "訪客志願保存在本機；使用 Google 登入後會自動帶入你的帳號。"
+                : "志願保存在本機瀏覽器。"}
           </p>
         )}
 

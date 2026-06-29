@@ -1,65 +1,58 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useUserStorage } from "../components/UserStorageProvider";
+import {
+  loadPreferencesForUser,
+  savePreferencesForUser,
+  type TopPreferences,
+} from "./userStorageKey";
 
-const KEY = "master-hub:preferences";
-
-export type TopPreferences = [string | null, string | null, string | null];
+export type { TopPreferences };
 
 const EMPTY: TopPreferences = [null, null, null];
 
-function load(): TopPreferences {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return EMPTY;
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed) || parsed.length !== 3) return EMPTY;
-    return parsed.map((v) => (typeof v === "string" ? v : null)) as TopPreferences;
-  } catch {
-    return EMPTY;
-  }
-}
-
-function save(prefs: TopPreferences) {
-  localStorage.setItem(KEY, JSON.stringify(prefs));
-}
-
 export function usePreferences() {
+  const { storageKey } = useUserStorage();
   const [preferences, setPreferences] = useState<TopPreferences>(EMPTY);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setPreferences(load());
+    setLoaded(false);
+    setPreferences(loadPreferencesForUser(storageKey));
     setLoaded(true);
-  }, []);
+  }, [storageKey]);
 
-  const setChoice = useCallback((rank: 0 | 1 | 2, schoolId: string | null) => {
-    setPreferences((prev) => {
-      const next: TopPreferences = [...prev];
-      if (schoolId) {
-        for (let i = 0; i < 3; i++) {
-          if (i !== rank && next[i] === schoolId) next[i] = null;
+  const setChoice = useCallback(
+    (rank: 0 | 1 | 2, schoolId: string | null) => {
+      setPreferences((prev) => {
+        const next: TopPreferences = [...prev];
+        if (schoolId) {
+          for (let i = 0; i < 3; i++) {
+            if (i !== rank && next[i] === schoolId) next[i] = null;
+          }
         }
-      }
-      next[rank] = schoolId;
-      save(next);
-      return next;
-    });
-  }, []);
+        next[rank] = schoolId;
+        savePreferencesForUser(storageKey, next);
+        return next;
+      });
+    },
+    [storageKey]
+  );
 
   const setChoiceBySchool = useCallback(
     (schoolId: string, rank: 0 | 1 | 2 | null) => {
       if (rank === null) {
         setPreferences((prev) => {
           const next = prev.map((id) => (id === schoolId ? null : id)) as TopPreferences;
-          save(next);
+          savePreferencesForUser(storageKey, next);
           return next;
         });
       } else {
         setChoice(rank, schoolId);
       }
     },
-    [setChoice]
+    [setChoice, storageKey]
   );
 
   return { preferences, loaded, setChoice, setChoiceBySchool };
