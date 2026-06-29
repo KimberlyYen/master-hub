@@ -526,10 +526,13 @@ function ApplicationCard({
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 
-type CategoryTab = "全部" | "資管" | "資工" | "前三志願";
+type CategoryTab = "全部" | "資管" | "資工" | "設計" | "前三志願";
 
-function detectCategory(department: string): "資管" | "資工" {
+type DeptCategory = "資管" | "資工" | "設計";
+
+function detectCategory(department: string): DeptCategory {
   if (department.includes("資訊管理") || department.includes("資管")) return "資管";
+  if (department.includes("設計")) return "設計";
   return "資工";
 }
 
@@ -573,6 +576,7 @@ export default function ApplicationsPage() {
   const visible = schools.filter((s) => !s.hidden);
   const imCount = visible.filter((s) => detectCategory(s.department) === "資管").length;
   const csCount = visible.filter((s) => detectCategory(s.department) === "資工").length;
+  const designCount = visible.filter((s) => detectCategory(s.department) === "設計").length;
   const prefCount = preferences.filter(Boolean).length;
 
   const prefSchools = preferences
@@ -592,10 +596,11 @@ export default function ApplicationsPage() {
     { label: "全部", value: "全部", count: visible.length },
     { label: "資管", value: "資管", count: imCount },
     { label: "資工", value: "資工", count: csCount },
+    { label: "設計", value: "設計", count: designCount },
     { label: "前三志願", value: "前三志願", count: prefCount },
   ];
 
-  const CATEGORY_INFO: Record<"資管" | "資工", {
+  const CATEGORY_INFO: Record<DeptCategory, {
     description: string;
     courses: string[];
     suitable: string[];
@@ -612,6 +617,12 @@ export default function ApplicationsPage() {
       courses: ["演算法與資料結構", "軟體工程", "機器學習 / 深度學習", "資訊安全", "雲端運算", "物聯網（IoT）", "自然語言處理（NLP）"],
       suitable: ["軟體工程師想深化技術或轉研究", "有志 AI／資安領域發展者", "技術主管想取得學術背景者"],
       career: ["軟體架構師 / 技術主管", "AI / ML 工程師", "資安工程師", "研發工程師 / 研究員"],
+    },
+    設計: {
+      description: "設計相關研究所涵蓋視覺傳達、工業設計、使用者體驗與數位媒體等方向，結合創意發想、設計方法與實務專題，培養能整合美感、技術與商業需求的設計人才。",
+      courses: ["設計方法論", "使用者研究", "介面與體驗設計", "視覺傳達", "設計管理", "原型製作與測試", "品牌與服務設計"],
+      suitable: ["UI/UX 設計師想深化研究方法", "視覺或產品設計師轉型策略角色", "具設計背景、想結合數位產品開發者"],
+      career: ["UX / Product Designer", "設計主管 / 創意總監", "設計顧問", "品牌與體驗策略師"],
     },
   };
 
@@ -654,7 +665,7 @@ export default function ApplicationsPage() {
         </div>
 
         {/* Category intro card */}
-        {(categoryTab === "資管" || categoryTab === "資工") && (() => {
+        {(categoryTab === "資管" || categoryTab === "資工" || categoryTab === "設計") && (() => {
           const info = CATEGORY_INFO[categoryTab];
           return (
             <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4 space-y-3">
@@ -727,7 +738,7 @@ export default function ApplicationsPage() {
 
         {categoryTab === "前三志願" && prefCount === 0 && (
           <p className="text-sm text-zinc-500">
-            在「全部」、「資管」或「資工」分頁的學校卡片上，從「志願」下拉選單設定前三志願。
+            在「全部」、「資管」、「資工」或「設計」分頁的學校卡片上，從「志願」下拉選單設定前三志願。
           </p>
         )}
 
